@@ -300,6 +300,7 @@ bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_w
         } else {
             cant_negativos++;
         }
+        heap.pop();
     }
     return cant_positivos >= cant_negativos;
 
