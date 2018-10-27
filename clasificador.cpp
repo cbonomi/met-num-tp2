@@ -33,13 +33,13 @@ vector<double> calcularMedias(const vector<vector<double> >& imgs) {
     return res;
 }*/
 
-vector<vector<double> > obtenerXt(const vector<vector<double> >& imgs, const vector<double>& medias){
-    const unsigned long& n = imgs.size();
-    const unsigned long& m = imgs[0].size();
+vector<vector<double> > obtenerX(const vector<vector<double> >& muestras, const vector<double>& medias){
+    const unsigned long& m = muestras.size();
+    const unsigned long& n = muestras[0].size();
     vector<vector<double> > res (m, vector<double>(n));
     for (uint i = 0; i < m; i++){
         for (uint j = 0; j < n; j++){
-            res[i][j] = imgs [j][i] - medias[i];//le resto la media correspondiente a cada variable
+            res[i][j] = muestras [i][j] - medias[i];//le resto la media correspondiente a cada variable
         }
     }
     return res;
@@ -335,7 +335,8 @@ vector<vector<double> > multMat(const vector<vector<double> >& mat1, const vecto
 vector<vector<double> > PCATecho (vector<vector<double> > &Matriz, uint alpha) {
     const unsigned long& m = Matriz[0].size();
     vector<double> medias = calcularMedias(Matriz);
-    vector<vector<double> > Xt = obtenerXt(Matriz, medias);
+    vector<vector<double> > Xt = obtenerX(Matriz, medias);
+    //vector<vector<double> > Xt = trasponer(X);
     vector<vector<double> > Mx = calcularMxTecho(Xt);
     vector<vector<double> > P = generarV(Mx,alpha);
     vector<vector<double> > V = multMat(Xt,P);
