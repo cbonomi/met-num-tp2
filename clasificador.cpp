@@ -3,24 +3,24 @@
 //
 
 #include "clasificador.h"
+#include "../src_catedra/types.h"
 
 
 using namespace std;
 
-vector<double> calculateMedias(const VectorizedEntriesMap &train_entries) {
-    const unsigned long& reviews_quantity = train_entries.size();
-    vector<double> res(0) ;
+vector<double> calcularMedias(const vector<vector<double> >& imgs) {
+    const unsigned long& m = imgs[0].size();
+    vector<double> res (m) ;
     double acum;
-    for (auto const& entry : train_entries) { // itero sobre la cantidad de variables (cantidad de palabras de cada review)
+    for (uint j = 0; j < m; j++) { //itero sobre la cantidad de variables (cantidad de palabras de cada review)
         acum = 0;
-        for (auto const& word_count : entry.second.bag_of_words) { // itero sobre la cantidad de reviews (cantidad de muestras de cada variable)
-            acum += word_count; // acumulo todos los valores
+        for (uint i = 0; i < imgs.size(); i++){ //itero sobre la cantidad de reviews (cantidad de muestras de cada variable)
+            acum += imgs[i][j]; //acumulo todos los valores
         }
-        res.push_back(acum/reviews_quantity); // divido por la cantidad de reviews para obtener la media de cada variable y la guardo en el lugar correspondiente de res
+        res[j] = acum/imgs.size();//divido por la cantidad de imagenes para obtener la media de cada variable y la guardo en el lugar correspondiente de res
     }
     return res;
 }
-
 /*vector<vector<double> > obtenerX(const vector<vector<double> >& imgs, const vector<double>& medias){
     const unsigned long& n = imgs.size();
     const unsigned long& m = imgs[0].size();
@@ -33,20 +33,18 @@ vector<double> calculateMedias(const VectorizedEntriesMap &train_entries) {
     return res;
 }*/
 
-vector<vector<double>> getXt(const VectorizedEntriesMap &train_entries, const vector<double>& medias){
-    vector<vector<double>> res(0);
-
-    for (auto const& entry : train_entries) {
-        int i = 0;
-        vector<double> row(0);
-        for (auto const& word_count : entry.second.bag_of_words) {
-            row.push_back(word_count - medias[i]); // le resto la media correspondiente a cada variable
-            i++;
+vector<vector<double> > obtenerXt(const vector<vector<double> >& imgs, const vector<double>& medias){
+    const unsigned long& n = imgs.size();
+    const unsigned long& m = imgs[0].size();
+    vector<vector<double> > res (m, vector<double>(n));
+    for (uint i = 0; i < m; i++){
+        for (uint j = 0; j < n; j++){
+            res[i][j] = imgs [j][i] - medias[i];//le resto la media correspondiente a cada variable
         }
-        res.push_back(row);
     }
     return res;
 }
+
 
 
 
@@ -76,7 +74,7 @@ vector<vector<double>> getXt(const VectorizedEntriesMap &train_entries, const ve
     return res;
 }*/
 
-vector<vector<double> > calculateMxTecho (const vector<vector<double> >& X) { //como traspongo X aca el m de aca es el n de la funcion de arriba y viceversa
+vector<vector<double> > calcularMxTecho (const vector<vector<double> >& X) { //como traspongo X aca el m de aca es el n de la funcion de arriba y viceversa
     const size_t& n = X.size();
     const size_t& m = X[0].size();
     vector<vector<double> > res(m, vector<double>(m));
@@ -96,9 +94,12 @@ vector<vector<double> > calculateMxTecho (const vector<vector<double> >& X) { //
             res[i][j] = covar_ij/(m-1);
             res[j][i] = covar_ij/(m-1);
         }
+        std::cerr
+                << "vector: " << i << std::endl;
     }
     return res;
 }
+
 
 
 
@@ -263,7 +264,7 @@ vector< pair<double,vector<double> > > deflacion(vector<vector<double> > mat, ui
     return res;
 }
 
-vector<vector<double> > generateV(const vector<vector<double> > &mat, uint alpha){
+vector<vector<double> > generarV(const vector<vector<double> > &mat, uint alpha){
     vector<vector<double> > res(mat[0].size(), vector<double>(alpha));
     vector< pair<double,vector<double> > > autovectores = deflacion(mat,alpha);
     for (uint j = 0; j < alpha; ++j)
@@ -331,12 +332,12 @@ vector<vector<double> > multMat(const vector<vector<double> >& mat1, const vecto
     return V; //devuelvo la V, recordar multiplicar fuera de la funcion
 }*/
 
-vector<vector<double> > PCATecho (VectorizedEntriesMap train_entries, uint alpha) {
-    const unsigned long& m = train_entries.size();
-    vector<double> medias = calculateMedias(train_entries);
-    vector<vector<double> > Xt = getXt(train_entries, medias);
-    vector<vector<double> > Mx = calculateMxTecho(Xt);
-    vector<vector<double> > P = generateV(Mx,alpha);
+vector<vector<double> > PCATecho (vector<vector<double> > &Matriz, uint alpha) {
+    const unsigned long& m = Matriz[0].size();
+    vector<double> medias = calcularMedias(Matriz);
+    vector<vector<double> > Xt = obtenerXt(Matriz, medias);
+    vector<vector<double> > Mx = calcularMxTecho(Xt);
+    vector<vector<double> > P = generarV(Mx,alpha);
     vector<vector<double> > V = multMat(Xt,P);
     V = trasponer(V);
     for (uint i = 0; i < V.size(); i++){
@@ -345,6 +346,27 @@ vector<vector<double> > PCATecho (VectorizedEntriesMap train_entries, uint alpha
     V = trasponer(V);
     return V; //devuelvo la V, recordar multiplicar fuera de la funcion
 }
+
+vector<vector<double>> getMatrix(VectorizedEntriesMap train_entries) {
+    vector<vector<double>> matrix(0);
+    for (const auto entry : train_entries) {
+        /* vector<double> row(0);
+         for (const auto word_count : entry.second.bag_of_words) {
+             row.push_back(word_count);
+         }*/
+        matrix.push_back(entry.second.bag_of_words);
+    }
+    return matrix;
+}
+
+void setMatrix(VectorizedEntriesMap train_entries, vector<vector<double>> matrix) {
+    int i = 0;
+    for (const auto row : matrix) {
+        train_entries[i].bag_of_words = row;
+        i++;
+    }
+}
+
 
 /*vector<uint> vectorDeKnns (const vector<vector<double> >& trainX, const vector<clase_t>& labelsX, const vector<vector<double> >& testY, uint k){
     const unsigned long& n = testY.size();
