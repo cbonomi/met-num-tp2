@@ -273,67 +273,43 @@ vector<vector<double> > generateV(const vector<vector<double> > &mat, uint alpha
 }
 
 bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_words, uint k) {
-    vector<pair<double,bool> > vecNormas(0); // Nos guardamos la norma del vector y si es positivo el comentario
 
-    
-    //TO DO: Nunca checkeamos el valor (positivo o negatovo) de las k resenias vecinas
-    // habria que hacer una tupla (nrma,valor_resenia) para luego realizar la decision al final
-    // ademas podriamos irlas poniendo directamente en el heap en lugar de guardarlas todas
-    // en vecNormas.
-    for (auto const& entry : train_entries) {
-        double norma = norma2(restaVec(entry.second.bag_of_words, bag_of_words));
-        vecNormas.push_back(std::make_pair (norma, entry.first));
-    }
+    //Construyo los primeros k vecinos para el heap
+    priority_queue<pair<double,bool> > heap;  //Creo un max_heap para los primeros k elementos
 
-    vector<pair<double,bool> >::const_iterator primero = vecNormas.cbegin();
-    vector<pair<double,bool> >::const_iterator k_esimo = primero + k;
+    auto entry = train_entries.begin();
 
-    priority_queue<pair<double,bool> > heap(primero, k_esimo);  //Creo un max_heap con los primeros k elementos de vecNormas
+    for (int i=0; i<k;++i){
+        double norma = norma2(restaVec(entry->second.bag_of_words, bag_of_words));
+        heap.push(make_pair(norma, entry->second.is_positive));
+        entry++;
+    }    
 
-    for(size_t i = k; i < vecNormas.size(); ++i){
-        if(vecNormas[i] < heap.top()){  //Si el i-ésimo elemento es más chico que el más grande del heap...
+    while (entry != train_entries.end()) {
+        double norma = norma2(restaVec(entry->second.bag_of_words, bag_of_words));
+        if(norma < heap.top().first){  //Si el i-ésimo elemento es más chico que el más grande del heap...
             heap.pop();                 //entonces saco al más grande...
-            heap.push(vecNormas[i]);    //y meto al i-ésimo elemento.
+            heap.push(make_pair(norma, entry->second.is_positive));    //y meto al nuevo elemento.
         }                               //De esta forma me quedo con los k elementos más chicos.
+        entry++;
     }
+    
+
 
     //Ahora contamos los negativos y los positivos de los k mas cercanos
 
-    int cant_positivos = 0;
-    int cant_negativos = 0;
+    int vecinos_positivos = 0;
+    int vecinos_negativos = 0;
 
     while(!heap.empty()){
         if (heap.top().second) {
-            cant_positivos++;
+            vecinos_positivos++;
         } else {
-            cant_negativos++;
+            vecinos_negativos++;
         }
         heap.pop();
     }
-    return cant_positivos >= cant_negativos;
-
-/*    map<bool, pair<uint, double> > candidatos;      // La 1° coordenada del significado cuenta la cantidad de apariciones.
-    while(!heap.empty()){                           // La 2° coordenada es la distancia más grande de todas las distancias que hay para un mismo tipo de comentario.
-        pair<bool, pair<uint, double> > clave_signif = make_pair(heap.top().second, make_pair(1, heap.top().first));
-        pair<map<bool, pair<uint, double> >::iterator, bool> it_bool = candidatos.insert(clave_signif);
-        if(not it_bool.second)  //Si el tipo de comentario ya estaba en el map, debo únicamente sumar 1 a la cant. de apariciones.
-            ++it_bool.first->second.first;
-        heap.pop();
-    }   //Cada tipo de comentario queda asociado a la 1° distancia con la que entró, que es la más grande.
-
-    auto it = candidatos.begin();
-    bool clase = it->first;
-    uint cant_apari = it->second.first;
-    double max_dist = it->second.second;
-    while (it != candidatos.end()){
-        if(cant_apari < it->second.first || (cant_apari == it->second.first && max_dist > it->second.second)){
-            clase = it->first;
-            cant_apari = it->second.first;
-            max_dist = it->second.second;
-        }
-        ++it;
-    }
-    return clase;*/
+    return vecinos_positivos >= vecinos_negativos;
 }
 
 vector<vector<double> > multMat(const vector<vector<double> >& mat1, const vector<vector<double> >& mat2) {
