@@ -7,21 +7,21 @@
 
 using namespace std;
 
-vector<double> calcularMedias(const vector<vector<double> >& imgs) {
-    const unsigned long& m = imgs[0].size();
-    vector<double> res (m) ;
+vector<double> calculateMedias(const VectorizedEntriesMap &train_entries) {
+    const unsigned long& reviews_quantity = train_entries.size();
+    vector<double> res(0) ;
     double acum;
-    for (uint j = 0; j < m; j++) {//itero sobre la cantidad de variables (cantidad de pixeles de cada imagen)
+    for (auto const& entry : train_entries) { // itero sobre la cantidad de variables (cantidad de palabras de cada review)
         acum = 0;
-        for (uint i = 0; i < imgs.size(); i++){//itero sobre la cantidad de imagenes (cantidad de muestras de cada variable)
-            acum += imgs[i][j];//acumulo todos los valores
+        for (auto const& word_count : entry.second.bag_of_words) { // itero sobre la cantidad de reviews (cantidad de muestras de cada variable)
+            acum += word_count; // acumulo todos los valores
         }
-        res[j] = acum/imgs.size();//divido por la cantidad de imagenes para obtener la media de cada variable y la guardo en el lugar correspondiente de res
+        res.push_back(acum/reviews_quantity); // divido por la cantidad de reviews para obtener la media de cada variable y la guardo en el lugar correspondiente de res
     }
     return res;
 }
 
-vector<vector<double> > obtenerX(const vector<vector<double> >& imgs, const vector<double>& medias){
+/*vector<vector<double> > obtenerX(const vector<vector<double> >& imgs, const vector<double>& medias){
     const unsigned long& n = imgs.size();
     const unsigned long& m = imgs[0].size();
     vector<vector<double> > res (n, vector<double>(m));
@@ -31,23 +31,26 @@ vector<vector<double> > obtenerX(const vector<vector<double> >& imgs, const vect
         }
     }
     return res;
-}
+}*/
 
-vector<vector<double> > obtenerXt(const vector<vector<double> >& imgs, const vector<double>& medias){
-    const unsigned long& n = imgs.size();
-    const unsigned long& m = imgs[0].size();
-    vector<vector<double> > res (m, vector<double>(n));
-    for (uint i = 0; i < m; i++){
-        for (uint j = 0; j < n; j++){
-            res[i][j] = imgs [j][i] - medias[i];//le resto la media correspondiente a cada variable
+vector<vector<double>> getXt(const VectorizedEntriesMap &train_entries, const vector<double>& medias){
+    vector<vector<double>> res(0);
+
+    for (auto const& entry : train_entries) {
+        int i = 0;
+        vector<double> row(0);
+        for (auto const& word_count : entry.second.bag_of_words) {
+            row.push_back(word_count - medias[i]); // le resto la media correspondiente a cada variable
+            i++;
         }
+        res.push_back(row);
     }
     return res;
 }
 
 
 
-vector<vector<double> > calcularMx (const vector<vector<double> >& imgs) {
+/*vector<vector<double> > calcularMx (const vector<vector<double> >& imgs) {
     vector<double> medias = calcularMedias(imgs);
     vector<vector<double> > X = obtenerX(imgs,medias);
     const size_t& n = imgs.size();
@@ -71,9 +74,9 @@ vector<vector<double> > calcularMx (const vector<vector<double> >& imgs) {
         }
     }
     return res;
-}
+}*/
 
-vector<vector<double> > calcularMxTecho (const vector<vector<double> >& X) { //como traspongo X aca el m de aca es el n de la funcion de arriba y viceversa
+vector<vector<double> > calculateMxTecho (const vector<vector<double> >& X) { //como traspongo X aca el m de aca es el n de la funcion de arriba y viceversa
     const size_t& n = X.size();
     const size_t& m = X[0].size();
     vector<vector<double> > res(m, vector<double>(m));
@@ -260,7 +263,7 @@ vector< pair<double,vector<double> > > deflacion(vector<vector<double> > mat, ui
     return res;
 }
 
-vector<vector<double> > generarV(const vector<vector<double> > &mat, uint alpha){
+vector<vector<double> > generateV(const vector<vector<double> > &mat, uint alpha){
     vector<vector<double> > res(mat[0].size(), vector<double>(alpha));
     vector< pair<double,vector<double> > > autovectores = deflacion(mat,alpha);
     for (uint j = 0; j < alpha; ++j)
@@ -345,19 +348,19 @@ vector<vector<double> > multMat(const vector<vector<double> >& mat1, const vecto
     return res;
 }
 
-vector<vector<double> > PCA (vector<vector<double> > trainX, uint alpha) {
+/*/vector<vector<double> > PCA (vector<vector<double> > trainX, uint alpha) {
     const unsigned long& m = trainX[0].size();
     vector<vector<double> > Mx = calcularMx(trainX);
     vector<vector<double> > V = generarV(Mx,alpha);
     return V; //devuelvo la V, recordar multiplicar fuera de la funcion
-}
+}*/
 
-vector<vector<double> > PCATecho (vector<vector<double> > trainX, uint alpha) {
-    const unsigned long& m = trainX[0].size();
-    vector<double> medias = calcularMedias(trainX);
-    vector<vector<double> > Xt = obtenerXt(trainX,medias);
-    vector<vector<double> > Mx = calcularMxTecho(Xt);
-    vector<vector<double> > P = generarV(Mx,alpha);
+vector<vector<double> > PCATecho (VectorizedEntriesMap train_entries, uint alpha) {
+    const unsigned long& m = train_entries.size();
+    vector<double> medias = calculateMedias(train_entries);
+    vector<vector<double> > Xt = getXt(train_entries, medias);
+    vector<vector<double> > Mx = calculateMxTecho(Xt);
+    vector<vector<double> > P = generateV(Mx,alpha);
     vector<vector<double> > V = multMat(Xt,P);
     V = trasponer(V);
     for (uint i = 0; i < V.size(); i++){
