@@ -272,6 +272,11 @@ vector<vector<double> > generarV(const vector<vector<double> > &mat, uint alpha)
 bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_words, uint k) {
     vector<pair<double,bool> > vecNormas(0); // Nos guardamos la norma del vector y si es positivo el comentario
 
+    
+    //TO DO: Nunca checkeamos el valor (positivo o negatovo) de las k resenias vecinas
+    // habria que hacer una tupla (nrma,valor_resenia) para luego realizar la decision al final
+    // ademas podriamos irlas poniendo directamente en el heap en lugar de guardarlas todas
+    // en vecNormas.
     for (auto const& entry : train_entries) {
         double norma = norma2(restaVec(entry.second.bag_of_words, bag_of_words));
         vecNormas.push_back(std::make_pair (norma, entry.first));
