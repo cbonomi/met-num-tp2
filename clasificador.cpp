@@ -94,8 +94,6 @@ vector<vector<double> > calcularMxTecho (const vector<vector<double> >& X) { //c
             res[i][j] = covar_ij/(m-1);
             res[j][i] = covar_ij/(m-1);
         }
-        std::cerr
-                << "vector: " << i << std::endl;
     }
     return res;
 }

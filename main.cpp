@@ -12,7 +12,7 @@ int main() {
          *  Retorna `false` si `token` no debe eliminarse
          **/
         double token_frecuency = vocabulary.at(token);
-        return token_frecuency < 0.01 || token_frecuency > 0.012;
+        return token_frecuency < 0.1 || token_frecuency > 0.103;
     };
     VectorizedEntriesMap train_entries;
     VectorizedEntriesMap test_entries;
