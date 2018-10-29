@@ -2,6 +2,7 @@
 // Created by christian on 25/05/18.
 //
 
+#include "rdtsc.h"
 #include "clasificador.h"
 #include "../src_catedra/types.h"
 
@@ -278,11 +279,19 @@ bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_w
 
     auto entry = train_entries.begin();
 
+    unsigned long delta = 0;
+    unsigned long start, end;
+    RDTSC_START(start);
+
     for (int i=0; i<k;++i){
         double norma = norma2(restaVec(entry->second.bag_of_words, bag_of_words));
         heap.push(make_pair(norma, entry->second.is_positive));
         entry++;
-    }    
+    }
+
+    RDTSC_STOP(end);
+    delta += end - start;
+
 
     while (entry != train_entries.end()) {
         double norma = norma2(restaVec(entry->second.bag_of_words, bag_of_words));
@@ -308,6 +317,7 @@ bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_w
         }
         heap.pop();
     }
+
     return vecinos_positivos >= vecinos_negativos;
 }
 
@@ -358,10 +368,11 @@ vector<vector<double>> getMatrix(VectorizedEntriesMap train_entries) {
     return matrix;
 }
 
-void setMatrix(VectorizedEntriesMap train_entries, vector<vector<double>> matrix) {
+void setMatrix(VectorizedEntriesMap &train_entries, vector<vector<double>> matrix) {
     int i = 0;
     for (const auto row : matrix) {
         train_entries[i].bag_of_words = row;
+        cout << train_entries[i].bag_of_words.size() << endl;
         i++;
     }
 }

@@ -29,6 +29,6 @@ vector<vector<double> > multMat(const vector<vector<double> >& mat1, const vecto
 bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_words, uint k);
 //vector<pair<double,clase_t> > vector_de_distancias(const vector<vector<double> >& trainX, const vector<clase_t>& labelsX, const vector<double>& newImg);
 vector<vector<double>> getMatrix(VectorizedEntriesMap train_entries);
-void setMatrix(VectorizedEntriesMap train_entries, vector<vector<double>> matrix);
+void setMatrix(VectorizedEntriesMap &train_entries, vector<vector<double>> matrix);
 vector<vector<double> > PCATecho (vector<vector<double> > &Matriz, uint alpha);
 #endif //CLASIFICADOR_H
