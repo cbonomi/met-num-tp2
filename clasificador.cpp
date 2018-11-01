@@ -2,7 +2,6 @@
 // Created by christian on 25/05/18.
 //
 
-#include "rdtsc.h"
 #include "clasificador.h"
 #include "../src_catedra/types.h"
 
@@ -49,31 +48,25 @@ vector<vector<double> > obtenerX(const vector<vector<double> >& muestras, const 
 
 
 
-/*vector<vector<double> > calcularMx (const vector<vector<double> >& imgs) {
-    vector<double> medias = calcularMedias(imgs);
-    vector<vector<double> > X = obtenerX(imgs,medias);
-    const size_t& n = imgs.size();
-    const size_t& m = imgs[0].size();
+vector<vector<double> > calcularMx (const vector<vector<double> >& X) {
+    const size_t& n = X.size();
+    const size_t& m = X[0].size();
     vector<vector<double> > res(m, vector<double>(m));
-    double covar_ij;
-    double& var_i = covar_ij;
-    for (uint i = 0; i < m; i++){
-        var_i = 0;
-        for (uint k = 0; k < n; k++){
-            var_i += X[k][i]*X[k][i]; //calculo de la sumatoria de productos para calcular varianza
-        }
-        res[i][i] = var_i/(n-1);
-        for (uint j = i+1; j < m; j++){ //como la matriz es simetrica basta calcular la mitad superior.
-            covar_ij = 0;
-            for (uint k = 0; k < n; k++){
-                covar_ij += X[k][i]*X[k][j];//calculo de la sumatoria de productos para calcular covarianza
+    for (int i = 0; i < m; ++i){
+        for (int j = i; j < m; ++j){
+            for (int k = 0; k < n; ++k){
+                // Using X_T won't trash the cache.
+                res[i][j] += X[k][i] * X[k][j];
+
             }
-            res[i][j] = covar_ij/(n-1);
-            res[j][i] = covar_ij/(n-1);
+            res[i][j] = res[i][j]/(n-1);
+            if (i!=j){
+                res[j][i] = res[i][j];
+            }
         }
     }
     return res;
-}*/
+}
 
 vector<vector<double> > calcularMxTecho (const vector<vector<double> >& X) { //como traspongo X aca el m de aca es el n de la funcion de arriba y viceversa
     const size_t& n = X.size();
@@ -281,7 +274,7 @@ bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_w
 
     unsigned long delta = 0;
     unsigned long start, end;
-    RDTSC_START(start);
+    //RDTSC_START(start);
 
     for (int i=0; i<k;++i){
         double norma = norma2(restaVec(entry->second.bag_of_words, bag_of_words));
@@ -289,8 +282,8 @@ bool knn(const VectorizedEntriesMap& train_entries, std::vector<double> bag_of_w
         entry++;
     }
 
-    RDTSC_STOP(end);
-    delta += end - start;
+    //RDTSC_STOP(end);
+    //delta += end - start;
 
 
     while (entry != train_entries.end()) {
@@ -344,10 +337,8 @@ vector<vector<double> > PCATecho (vector<vector<double> > &Matriz, uint alpha) {
     const unsigned long& m = Matriz[0].size();
     vector<double> medias = calcularMedias(Matriz);
     vector<vector<double> > Xt = obtenerX(Matriz, medias);
-    //vector<vector<double> > Xt = trasponer(X);
-    vector<vector<double> > Mx = calcularMxTecho(Xt);
-    vector<vector<double> > P = generarV(Mx,alpha);
-    vector<vector<double> > V = multMat(Xt,P);
+    vector<vector<double> > Mx = calcularMx(Xt);
+    vector<vector<double> > V = generarV(Mx,alpha);
     V = trasponer(V);
     for (uint i = 0; i < V.size(); i++){
         normalizar2(V[i]);
@@ -368,11 +359,10 @@ vector<vector<double>> getMatrix(VectorizedEntriesMap train_entries) {
     return matrix;
 }
 
-void setMatrix(VectorizedEntriesMap &train_entries, vector<vector<double>> matrix) {
+void setMatrix(VectorizedEntriesMap &data_entries, vector<vector<double>> matrix) {
     int i = 0;
-    for (const auto row : matrix) {
-        train_entries[i].bag_of_words = row;
-        cout << train_entries[i].bag_of_words.size() << endl;
+    for (auto it = data_entries.begin(); it != data_entries.end(); ++it){
+        data_entries[it->first].bag_of_words = matrix[i];
         i++;
     }
 }
@@ -386,4 +376,3 @@ void setMatrix(VectorizedEntriesMap &train_entries, vector<vector<double>> matri
     }
     return res;
 }*/
-
