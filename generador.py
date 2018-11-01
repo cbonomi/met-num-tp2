@@ -13,7 +13,11 @@ def generar_graficos_knn(ejec,output,alpha,mode):
 	precision = []
 	f1 = []
 	acc = []
-	for k in [3,25,45,65,86,105,125,155,175]:
+	vec_tp = []
+	vec_fp = []
+	vec_tn = []
+	vec_fn = []
+	for k in [3,5]:#,15,25,35]:
 		print("k={}".format(k))
 		valor_k.append(k)
 		comm = "./{} -debug -m {} -alpha {} -k {}".format(ejec,mode,alpha,k)
@@ -26,6 +30,10 @@ def generar_graficos_knn(ejec,output,alpha,mode):
 		fp = results[1]
 		tn = results[2] 
 		fn = results[3]
+		vec_tp.append(tp)
+		vec_fp.append(fp)
+		vec_tn.append(tn)
+		vec_fn.append(fn)
 		tot = tp + tn + fp + fn
 		r = 100*tp / float(tp + fn)
 		p = 100*tp / float(tp + fp)
@@ -38,10 +46,10 @@ def generar_graficos_knn(ejec,output,alpha,mode):
 		print("K:{} ACC:{} Pre:{} Rec:{} F1:{} ".format(k,a,p,r,f))
 			
 
-
-	# if os.path.exists("output.txt"): #optional check if file exists
- #  		with open(file_path, 'a') as file:
- #    file.write("\n") # could be any text, appended @ the end of file
+	file = open("output_{}.txt".format(output), 'w')
+	for i in range(0,len(valor_k)):
+		file.write("{} {} {} {} {} \n".format(valor_k[i],vec_tp[i],vec_fp[i],vec_tn[i],vec_fn[i]))
+	
 
 	miny = 50
 	maxy = 100	
@@ -130,7 +138,6 @@ def graph_from_data(valor_k,tp,tn,fp,fn,output):
 	plt.grid(True)
 	plt.savefig(figname)
 	plt.close()
-
 
 
 if __name__ == "__main__":

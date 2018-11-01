@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
          *  Retorna `false` si `token` no debe eliminarse
          **/
         double token_frecuency = vocabulary.at(token);
-        return token_frecuency < 0.1 || token_frecuency > 0.5;
+        return token_frecuency < 0.05 || token_frecuency > 0.4;
     };
 
 
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 	string output_file_path = "";
 	int k = 5;
 	int alpha = 15;
-	bool debug = true;
+	bool debug = false;
 	uint method = PCA;
     for (uint c=1;c<argc;++c){
 		string arg = argv[c];
@@ -75,6 +75,10 @@ int main(int argc, char *argv[]) {
         << "Tamaño del dataset de training: " << train_entries.size() << " entradas" << std::endl
         << "Tamaño del dataset de testing: " << test_entries.size() << " entradas" << std::endl;
   
+    ofstream outFile;
+    if (output_to_file){
+    	outFile.open (output_file_path);	
+    }
 
     int tp = 0;
     int fp = 0;
@@ -90,8 +94,17 @@ int main(int argc, char *argv[]) {
         else if (!label && predi) fp++;
         else if (!label && !predi) tn++;
         amount++;
+        if (output_to_file){
+        	outFile << predi <<"\n";
+        }
     }
 
+    if (output_to_file){
+    	outFile.close();
+    }
+    {
+    	/* code */
+    }
     
     if (debug){
 		std::cout
