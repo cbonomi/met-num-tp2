@@ -21,8 +21,8 @@ int main(int argc, char *argv[]) {
 	std::string entries_path = "../datos/imdb_tokenized.csv";
 	bool output_to_file = false;
 	string output_file_path = "";
-	int k = 5;
-	int alpha = 15;
+	int k = 40;
+	int alpha = 30;
 	bool debug = false;
 	uint method = PCA;
     for (uint c=1;c<argc;++c){
@@ -102,9 +102,7 @@ int main(int argc, char *argv[]) {
     if (output_to_file){
     	outFile.close();
     }
-    {
-    	/* code */
-    }
+   
     
     if (debug){
 		std::cout
